@@ -3,7 +3,7 @@ package com.bookit.step_definitions;
 
 import com.bookit.utilities.DBUtils;
 import com.bookit.utilities.Driver;
-import cucumber.api.Scenario;
+import io.cucumber.core.api.Scenario;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import org.openqa.selenium.OutputType;
