@@ -3,12 +3,10 @@ package com.bookit.step_definitions;
 import com.bookit.pages.LogInPage;
 import com.bookit.pages.MapPage;
 import com.bookit.pages.SelfPage;
-import com.bookit.utilities.BookItApiUtil;
-import com.bookit.utilities.ConfigurationReader;
-import com.bookit.utilities.Driver;
-import com.bookit.utilities.Environment;
+import com.bookit.utilities.*;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
@@ -126,4 +124,47 @@ public class BookApiStepDefs {
         assertThat(uiUserDataMap, equalTo(responseMap));
 
     }
+
+    @When("Users sends POST request to {string} with following info:")
+    public void users_sends_POST_request_to_with_following_info(String endpoint, Map<String, String> teamInfo) {
+        response =given().accept(ContentType.JSON)
+                .and().queryParams(teamInfo)
+                .and().header("Authorization", accessToken)
+                .when().post(baseUrl + endpoint);
+        response.prettyPrint();
+
+        newRecordMap=teamInfo;
+    }
+    Map <String , ? > newRecordMap;
+    @Then("Database should persist same team info")
+    public void database_should_persist_same_team_info() {
+
+
+
+        int newTeamID = response.path("entryiId");
+        String sql = "SELECT * FROM team WHERE id = " + newTeamID;
+        Map<String, Object> dbNewTeamMap = DBUtils.getRowMap(sql);
+
+        System.out.println("sql = " + sql);
+        System.out.println("dbNewTeamMap = " + dbNewTeamMap);
+
+        assertThat(dbNewTeamMap.get("id"), equalTo((long)newTeamID));
+        assertThat(dbNewTeamMap.get("name"), equalTo(newRecordMap.get("team-name")));
+        assertThat(dbNewTeamMap.get("batch_number").toString(), equalTo(newRecordMap.get("batch-number")));
+
+
+    }
+
+    @Then("User deletes previously created team")
+    public void user_deletes_previously_created_team() {
+
+        int teamId = response.path("entryiId");
+        given().accept(ContentType.JSON)
+                .and().header("Authorization", accessToken)
+                .and().pathParam("id", teamId)
+                .when().delete(baseUrl + "/api/teams/{id}")
+                .then().log().all();
+
+    }
+
 }
